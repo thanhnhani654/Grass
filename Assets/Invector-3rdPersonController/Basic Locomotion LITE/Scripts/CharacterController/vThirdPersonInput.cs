@@ -121,7 +121,10 @@ namespace Invector.CharacterController
             if (Input.GetKeyDown(KeyCode.Escape))
             {
                 if (!Cursor.visible)
+                {
+                    tpCamera.lockCamera = true;
                     Cursor.visible = true;
+                }
                 else
                     Application.Quit();
             }

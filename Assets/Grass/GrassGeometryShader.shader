@@ -10,6 +10,8 @@ Shader "Custom/GrassGeometryShader" {
 		_Cutoff("Cutoff", Range(0,1)) = 0.25
 		_GrassHeight("Grass Height", Float) = 0.25
 		_GrassWidth("Grass Width", Float) = 0.25
+		_WindSpeed("Wind Speed", Float) = 100
+		_WindStrength("Wind Strength", Float) = 0.05		
 	}
 		SubShader{
 			Tags{ "RenderType" = "Opaque"}
@@ -53,6 +55,8 @@ Shader "Custom/GrassGeometryShader" {
 		half _GrassHeight;
 		half _GrassWidth;
 		half _Cutoff;
+		half _WindStrength;
+		half _WindSpeed;
 
 		v2g vert(appdata_full v)
 		{
@@ -77,11 +81,17 @@ Shader "Custom/GrassGeometryShader" {
 			float3 v0 = IN[0].pos.xyz;
 			float3 v1 = IN[0].pos.xyz + IN[0].norm * _GrassHeight;
 
+			float3 wind = float3(
+				sin(_Time.x * _WindSpeed + v0.x) + sin(_Time.x * _WindSpeed + v0.z * 2) + sin(_Time.x * _WindSpeed * 0.1 + v0.x), 0,
+				0);//cos(_Time.x * _WindSpeed + v0.x * 2)	+ cos(_Time.x * _WindSpeed + v0.z));
+			v1 += wind * _WindStrength;
+
 			float3 color = (IN[0].color);
 
 			g2f OUT;
 			UNITY_INITIALIZE_OUTPUT(g2f, OUT);
 
+			//Quad
 			OUT.pos = UnityObjectToClipPos(v0 + perpendicularAngle * 0.5 * _GrassHeight);
 			OUT.norm = faceNormal;
 			OUT.uv = float2(1, 0);
