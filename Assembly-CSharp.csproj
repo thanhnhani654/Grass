@@ -61,9 +61,11 @@
      <Compile Include="Assets\Invector-3rdPersonController\Basic Locomotion LITE\Scripts\Generic\vDestroyGameObject.cs" />
      <Compile Include="Assets\Invector-3rdPersonController\Basic Locomotion LITE\Scripts\Generic\vExtensions.cs" />
      <Compile Include="Assets\Invector-3rdPersonController\Basic Locomotion LITE\Scripts\Generic\vPickupItem.cs" />
-     <None Include="Assets\Grass\NewSurfaceShader.shader" />
+     <None Include="Assets\Grass\NewImageEffectShader.shader" />
      <None Include="Assets\Invector-3rdPersonController\Basic Locomotion LITE\README_Basic.txt" />
+     <None Include="Assets\Grass\BillBoardShader.shader" />
      <None Include="Assets\Grass\GrassGeometryShader.shader" />
+     <None Include="Assets\Grass\Vegetation v2.shader" />
  <Reference Include="UnityEditor.StandardEvents">
  <HintPath>E:/Project/Grass/Library/ScriptAssemblies/UnityEditor.StandardEvents.dll</HintPath>
  </Reference>

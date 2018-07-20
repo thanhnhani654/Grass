@@ -10,8 +10,10 @@ Shader "Custom/GrassGeometryShader" {
 		_Cutoff("Cutoff", Range(0,1)) = 0.25
 		_GrassHeight("Grass Height", Float) = 0.25
 		_GrassWidth("Grass Width", Float) = 0.25
+		_WindMap("Wind Map", 2D) = "white" {}
 		_WindSpeed("Wind Speed", Float) = 100
-		_WindStrength("Wind Strength", Float) = 0.05		
+		_WindStrength("Wind Strength", Float) = 0.05
+		_WindZone("Wind Zone", Vector) = (0,0,0,0)
 	}
 		SubShader{
 			Tags{ "RenderType" = "Opaque"}
@@ -28,7 +30,8 @@ Shader "Custom/GrassGeometryShader" {
 #pragma geometry geom
 
 			// Use shader model 4.0 target, we need geometry shader support
-			sampler2D _MainTex;
+	sampler2D _MainTex;
+	sampler2D _WindMap;
 
 		struct v2g
 		{
@@ -57,6 +60,7 @@ Shader "Custom/GrassGeometryShader" {
 		half _Cutoff;
 		half _WindStrength;
 		half _WindSpeed;
+		float3 _WindZone;
 
 		v2g vert(appdata_full v)
 		{
@@ -70,7 +74,22 @@ Shader "Custom/GrassGeometryShader" {
 			return OUT;
 		}
 
-		[maxvertexcount(4)]
+		void buildQuadGrass(inout TriangleStream<g2f> triStream, float3 points[4], float3 color)
+		{
+			g2f OUT;
+			float3 faceNormal = cross(points[1] - points[0], points[2] - points[0]);
+			for (int i = 0; i < 4; i++)
+			{
+				OUT.pos = UnityObjectToClipPos(points[i]);
+				OUT.norm = faceNormal;
+				OUT.diffuseColor = color;
+				OUT.uv = float2(i % 2, (int)(i / 2));
+				triStream.Append(OUT);
+			}
+			triStream.RestartStrip();
+		}
+
+		[maxvertexcount(24)]
 		void geom(point v2g IN[1], inout TriangleStream<g2f> triStream)
 		{
 			float3 lightPosition = _WorldSpaceLightPos0;
@@ -81,18 +100,26 @@ Shader "Custom/GrassGeometryShader" {
 			float3 v0 = IN[0].pos.xyz;
 			float3 v1 = IN[0].pos.xyz + IN[0].norm * _GrassHeight;
 
-			float3 wind = float3(
-				sin(_Time.x * _WindSpeed + v0.x) + sin(_Time.x * _WindSpeed + v0.z * 2) + sin(_Time.x * _WindSpeed * 0.1 + v0.x), 0,
-				0);//cos(_Time.x * _WindSpeed + v0.x * 2)	+ cos(_Time.x * _WindSpeed + v0.z));
-			v1 += wind * _WindStrength;
+			//Wind Shader
+			float3 wind = float3(0,0,0);
+			float y = _Time.y / 2;
+
+			wind.x = (sin(y) + sin(2 * y) * sin(3 * y) + 1.5)*0.02 * sin(_Time.x * _WindSpeed + v0.x) * sin(_Time.x * _WindSpeed + v0.z * 2);
+			wind.z = (sin(_Time.x * _WindSpeed) + 1) ;
+			//wind.z = 10 / (-(_WindZone.z - v0.z)) * (sin(_Time.x * _WindSpeed) + 1);
+			//wind.z = -5;
+			//wind.x = 0;
+			wind.x *= _WindSpeed;
+
+
+			v1 += wind *_WindStrength;
 
 			float3 color = (IN[0].color);
 
 			g2f OUT;
 			UNITY_INITIALIZE_OUTPUT(g2f, OUT);
-
 			//Quad
-			OUT.pos = UnityObjectToClipPos(v0 + perpendicularAngle * 0.5 * _GrassHeight);
+			/*OUT.pos = UnityObjectToClipPos(v0 + perpendicularAngle * 0.5 * _GrassHeight);
 			OUT.norm = faceNormal;
 			OUT.uv = float2(1, 0);
 			OUT.diffuseColor = color;
@@ -115,12 +142,33 @@ Shader "Custom/GrassGeometryShader" {
 			OUT.uv = float2(0,1);
 			OUT.diffuseColor = color;
 			triStream.Append(OUT);
+*/
+
+			//Quad1
+			float3 quad1[4] = { v0 + perpendicularAngle * 0.5 * _GrassWidth,
+				v0 - perpendicularAngle * 0.5 * _GrassWidth,
+				v1 + perpendicularAngle * 0.5 * _GrassWidth,
+				v1 - perpendicularAngle * 0.5 * _GrassWidth, };
+			buildQuadGrass(triStream, quad1, color);
+			//Quad2
+			float3 quad2[4] = { v0 + float3(sin(60),0,-cos(60)) * 0.5 * _GrassWidth,
+				v0 - float3(sin(60),0,-cos(60)) * 0.5 * _GrassWidth,
+				v1 + float3(sin(60),0,-cos(60)) * 0.5 * _GrassWidth,
+				v1 - float3(sin(60),0,-cos(60)) * 0.5 * _GrassWidth, };
+			buildQuadGrass(triStream, quad2, color);
+			//Quad2
+			float3 quad3[4] = { v0 + float3(sin(60),0,cos(60)) * 0.5 * _GrassWidth,
+				v0 - float3(sin(60),0,cos(60)) * 0.5 * _GrassWidth,
+				v1 + float3(sin(60),0,cos(60)) * 0.5 * _GrassWidth,
+				v1 - float3(sin(60),0,cos(60)) * 0.5 * _GrassWidth, };
+			buildQuadGrass(triStream, quad3, color);
+			
 		}
 
 		half4 frag(g2f IN) : COLOR
 		{
 			fixed4 c = tex2D(_MainTex, IN.uv);
-			clip(c.a - _Cutoff);	
+			clip(c.a - _Cutoff);
 			return c;
 		}
 			ENDCG

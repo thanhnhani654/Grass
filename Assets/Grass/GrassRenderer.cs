@@ -6,7 +6,9 @@ using UnityEngine;
 public class GrassRenderer : MonoBehaviour {
 
     private Mesh mesh;
+    public Material material;
     public MeshFilter filter;
+    public GameObject windZone;
 
     public int seed;
 
@@ -21,6 +23,8 @@ public class GrassRenderer : MonoBehaviour {
     private Vector3 lastPosition;
 
     void Update () {
+
+        //material.SetVector("_WindZone", windZone.transform.position);
 
         if (lastPosition == transform.position)
             return;
